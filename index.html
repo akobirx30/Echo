@@ -56,6 +56,8 @@ canvas{display:block;}
 .btn.rd{border-color:rgba(220,60,60,0.45);color:rgba(255,130,130,0.9);}
 .btn.rd:hover,.btn.rd:active{background:rgba(180,30,30,0.12);}
 .btn.sm{font-size:10px;color:rgba(255,255,255,0.25);border-color:transparent;margin-top:2px;}
+.ctrlOpt{flex:1;text-align:center;font-size:clamp(10px,3vw,12px);padding:9px 4px;margin-bottom:0;}
+.ctrlOpt.active{border-color:rgba(255,255,255,0.8);color:#fff;background:rgba(255,255,255,0.08);}
 .btn.sm:hover{color:rgba(255,255,255,0.6);}
 hr.ln{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:12px 0;}
 .inf{font-size:clamp(9px,2.4vw,11px);color:rgba(255,255,255,0.26);text-align:center;margin-bottom:14px;letter-spacing:0.07em;}
@@ -191,6 +193,7 @@ hr.ln{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:12px 0;}
     <button class="btn" onclick="doContinue()">CONTINUE</button>
     <hr class="ln">
     <button class="btn" onclick="gp('pSound')">AMBIENT SOUND</button>
+    <button class="btn" id="ctrlSettingsBtn" onclick="gp('pCtrl')">CONTROLS SETTINGS</button>
     <button class="btn" onclick="gp('pHowto')">HOW TO PLAY</button>
     <button class="btn sm" onclick="showDeviceSelect()">CHANGE DEVICE</button>
   </div>
@@ -231,6 +234,70 @@ hr.ln{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:12px 0;}
       <span style="font-size:11px;color:rgba(255,255,255,0.5);min-width:24px;text-align:right" id="volL">60</span>
     </div>
     <button class="btn rd" onclick="selAmb(-1)">SILENCE</button>
+    <button class="btn" onclick="gp('pTitle')">BACK</button>
+  </div>
+ 
+  <div id="pCtrl" class="panel" style="display:none">
+    <div class="ph" style="font-size:clamp(18px,5vw,24px)">CONTROLS</div>
+    <div class="ps" style="margin-bottom:16px">MOBILE SETTINGS</div>
+ 
+    <!-- JOYSTICK VISIBILITY -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;letter-spacing:0.14em;color:rgba(255,255,255,0.4);margin-bottom:8px">JOYSTICK OPACITY</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input type="range" id="joyOpacity" min="5" max="100" value="30" style="flex:1;accent-color:#fff" oninput="applyCtrlSettings()">
+        <span style="font-size:11px;color:rgba(255,255,255,0.5);min-width:30px;text-align:right" id="joyOpacityVal">30%</span>
+      </div>
+    </div>
+ 
+    <!-- JOYSTICK SIZE -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;letter-spacing:0.14em;color:rgba(255,255,255,0.4);margin-bottom:8px">JOYSTICK SIZE</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn ctrlOpt" id="jsSmall" onclick="setJoySize('small')">SMALL</button>
+        <button class="btn ctrlOpt" id="jsMed"   onclick="setJoySize('medium')">MEDIUM</button>
+        <button class="btn ctrlOpt" id="jsLarge" onclick="setJoySize('large')">LARGE</button>
+      </div>
+    </div>
+ 
+    <!-- JOYSTICK MODE -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;letter-spacing:0.14em;color:rgba(255,255,255,0.4);margin-bottom:8px">JOYSTICK MODE</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn ctrlOpt" id="jmDynamic" onclick="setJoyMode('dynamic')">DYNAMIC</button>
+        <button class="btn ctrlOpt" id="jmFixed"   onclick="setJoyMode('fixed')">FIXED</button>
+      </div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.25);margin-top:5px;letter-spacing:0.06em">
+        DYNAMIC = APPEARS WHERE YOU TAP · FIXED = ALWAYS IN CORNER
+      </div>
+    </div>
+ 
+    <!-- SHOW/HIDE BUTTONS -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;letter-spacing:0.14em;color:rgba(255,255,255,0.4);margin-bottom:8px">BUTTONS</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn ctrlOpt" id="btnShow" onclick="setShowBtns(true)">SHOW</button>
+        <button class="btn ctrlOpt" id="btnHide" onclick="setShowBtns(false)">HIDE</button>
+      </div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.25);margin-top:5px;letter-spacing:0.06em">
+        IF HIDDEN — TAP RIGHT SIDE TO SHOOT
+      </div>
+    </div>
+ 
+    <!-- SHOW/HIDE JOYSTICK ENTIRELY -->
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;letter-spacing:0.14em;color:rgba(255,255,255,0.4);margin-bottom:8px">JOYSTICK VISIBLE</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn ctrlOpt" id="jvShow" onclick="setShowJoy(true)">SHOW</button>
+        <button class="btn ctrlOpt" id="jvHide" onclick="setShowJoy(false)">HIDE</button>
+      </div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.25);margin-top:5px;letter-spacing:0.06em">
+        IF HIDDEN — LEFT SIDE STILL WORKS AS JOYSTICK
+      </div>
+    </div>
+ 
+    <hr class="ln">
+    <button class="btn" onclick="resetCtrlSettings()">RESET TO DEFAULT</button>
     <button class="btn" onclick="gp('pTitle')">BACK</button>
   </div>
  
@@ -285,6 +352,9 @@ function chooseDevice(type){
   isMob = (type==='mobile');
   sv.device = type; saveSv();
   document.getElementById('deviceScreen').style.display='none';
+  // show/hide controls settings button based on device
+  const csb = document.getElementById('ctrlSettingsBtn');
+  if(csb) csb.style.display = isMob ? 'block' : 'none';
   buildHowto();
   showPanel('pTitle');
   resizeC();
@@ -756,7 +826,7 @@ function draw(){
 function loop(){ if(gs==='play') update(); draw(); requestAnimationFrame(loop); }
  
 // ═══════════════ PANELS ═══════════════
-const allPanels=['pTitle','pLevels','pHowto','pPause','pClear','pSound'];
+const allPanels=['pTitle','pLevels','pHowto','pPause','pClear','pSound','pCtrl'];
 function gp(id){ showPanel(id); }
 function showPanel(id){
   allPanels.forEach(p=>document.getElementById(p).style.display='none');
@@ -765,6 +835,7 @@ function showPanel(id){
   if(id==='pTitle'){updInf();document.getElementById('xbtn').style.display='none';hideMob();}
   if(id==='pLevels') buildGrid();
   if(id==='pSound') buildSndList();
+  if(id==='pCtrl'){updateCtrlUI();}
   if(id==='pPause') document.getElementById('pauseL').textContent=`LEVEL ${String(curLv).padStart(2,'0')}`;
 }
 function hidePanel(){
@@ -795,6 +866,7 @@ function showMob(){
   document.getElementById('mctrl').style.display='block';
   document.getElementById('azone').style.display='block';
   document.getElementById('mobtip').style.display='block';
+  applyCtrlSettings();
 }
 function hideMob(){
   document.getElementById('mctrl').style.display='none';
@@ -823,6 +895,90 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{keys[e.key]=false;});
  
+ 
+// ═══════════════ CTRL SETTINGS ═══════════════
+let ctrlCfg = {
+  joyOpacity: 30,   // 5-100
+  joySize: 'medium',  // small / medium / large
+  joyMode: 'dynamic', // dynamic / fixed
+  showBtns: true,
+  showJoy: true,
+};
+const JSIZE = {small:88, medium:118, large:150};
+ 
+function loadCtrlCfg(){
+  try{ const d=localStorage.getItem('echo_ctrl'); if(d) ctrlCfg=JSON.parse(d); }catch(e){}
+}
+function saveCtrlCfg(){ try{ localStorage.setItem('echo_ctrl',JSON.stringify(ctrlCfg)); }catch(e){} }
+ 
+function applyCtrlSettings(){
+  const op = document.getElementById('joyOpacity');
+  if(op){ ctrlCfg.joyOpacity=parseInt(op.value); document.getElementById('joyOpacityVal').textContent=op.value+'%'; }
+  const alpha = ctrlCfg.joyOpacity/100;
+  const sz = JSIZE[ctrlCfg.joySize]||118;
+ 
+  // Apply joystick opacity
+  const jb = document.getElementById('jbase');
+  const jk = document.getElementById('jknob');
+  if(jb){
+    jb.style.borderColor=`rgba(255,255,255,${alpha*0.9})`;
+    jb.style.background=`rgba(255,255,255,${alpha*0.15})`;
+    // direction arrows
+    document.querySelectorAll('.jarrow').forEach(a=>{ a.style.color=`rgba(255,255,255,${alpha*0.7})`; });
+  }
+  if(jk){
+    jk.style.background=`rgba(255,255,255,${alpha*0.9})`;
+    jk.style.borderColor=`rgba(255,255,255,${Math.min(alpha*1.5,1)})`;
+    jk.style.boxShadow=`0 0 14px rgba(255,255,255,${alpha*0.4})`;
+  }
+ 
+  // Apply joystick size
+  if(jb){ jb.style.width=sz+'px'; jb.style.height=sz+'px'; }
+ 
+  // Apply show/hide joystick
+  if(jb) jb.style.visibility = ctrlCfg.showJoy ? 'visible' : 'hidden';
+ 
+  // Apply show/hide buttons
+  const rb = document.getElementById('rbtns');
+  if(rb) rb.style.display = ctrlCfg.showBtns ? 'flex' : 'none';
+ 
+  saveCtrlCfg();
+  updateCtrlUI();
+}
+ 
+function updateCtrlUI(){
+  // Opacity slider
+  const op = document.getElementById('joyOpacity');
+  if(op){ op.value=ctrlCfg.joyOpacity; document.getElementById('joyOpacityVal').textContent=ctrlCfg.joyOpacity+'%'; }
+  // Size buttons
+  ['small','medium','large'].forEach(s=>{
+    const b=document.getElementById('js'+s.charAt(0).toUpperCase()+s.slice(1));
+    if(b) b.classList.toggle('active', ctrlCfg.joySize===s);
+  });
+  // Mode buttons
+  document.getElementById('jmDynamic')?.classList.toggle('active', ctrlCfg.joyMode==='dynamic');
+  document.getElementById('jmFixed')?.classList.toggle('active', ctrlCfg.joyMode==='fixed');
+  // Buttons show/hide
+  document.getElementById('btnShow')?.classList.toggle('active', ctrlCfg.showBtns);
+  document.getElementById('btnHide')?.classList.toggle('active', !ctrlCfg.showBtns);
+  // Joy show/hide
+  document.getElementById('jvShow')?.classList.toggle('active', ctrlCfg.showJoy);
+  document.getElementById('jvHide')?.classList.toggle('active', !ctrlCfg.showJoy);
+}
+ 
+function setJoySize(s){ ctrlCfg.joySize=s; applyCtrlSettings(); }
+function setJoyMode(m){ ctrlCfg.joyMode=m; applyCtrlSettings(); }
+function setShowBtns(v){ ctrlCfg.showBtns=v; applyCtrlSettings(); }
+function setShowJoy(v){ ctrlCfg.showJoy=v; applyCtrlSettings(); }
+ 
+function resetCtrlSettings(){
+  ctrlCfg={joyOpacity:30,joySize:'medium',joyMode:'dynamic',showBtns:true,showJoy:true};
+  applyCtrlSettings();
+}
+ 
+// Hook into gp('pCtrl') to refresh UI
+const _origGp = gp;
+// Patch showPanel to call updateCtrlUI when opening pCtrl
 // ═══════════════ JOYSTICK ═══════════════
 let jA=false,jDx=0,jDy=0,jTid=null,jBX=0,jBY=0;
 const JM=46;
@@ -833,14 +989,21 @@ const jknob=document.getElementById('jknob');
 function jStart(e){
   e.preventDefault();if(jTid!==null)return;
   const t=e.changedTouches[0];jTid=t.identifier;jA=true;
-  // anchor joystick center to where finger landed
-  jBX=t.clientX;jBY=t.clientY;
-  // visually move jbase to finger position
-  const zr=document.getElementById('jzone').getBoundingClientRect();
-  const bx=t.clientX-zr.left-59, by=t.clientY-zr.top-59;
-  jbase.style.left=Math.max(0,bx)+'px';
-  jbase.style.bottom='auto';
-  jbase.style.top=Math.max(0,by)+'px';
+  const sz=JSIZE[ctrlCfg.joySize]||118;
+  const half=sz/2;
+  if(ctrlCfg.joyMode==='dynamic'){
+    // anchor to finger
+    jBX=t.clientX;jBY=t.clientY;
+    const zr=document.getElementById('jzone').getBoundingClientRect();
+    const bx=t.clientX-zr.left-half, by=t.clientY-zr.top-half;
+    jbase.style.left=Math.max(0,bx)+'px';
+    jbase.style.bottom='auto';
+    jbase.style.top=Math.max(0,by)+'px';
+  } else {
+    // fixed — always bottom-left corner
+    const r=jbase.getBoundingClientRect();
+    jBX=r.left+r.width/2;jBY=r.top+r.height/2;
+  }
   jUp(t.clientX,t.clientY);
 }
 function jMove(e){e.preventDefault();for(const t of e.changedTouches)if(t.identifier===jTid)jUp(t.clientX,t.clientY);}
@@ -848,8 +1011,9 @@ function jEnd(e){
   for(const t of e.changedTouches)if(t.identifier===jTid){
     jA=false;jDx=0;jDy=0;jTid=null;
     jknob.style.transform='translate(-50%,-50%)';
-    // reset jbase to default position
-    jbase.style.left='26px';jbase.style.top='auto';jbase.style.bottom='26px';
+    if(ctrlCfg.joyMode==='dynamic'){
+      jbase.style.left='26px';jbase.style.top='auto';jbase.style.bottom='26px';
+    }
     break;
   }
 }
@@ -909,11 +1073,14 @@ resizeC();
 // ═══════════════ INIT ═══════════════
 loadSv();
 if(sv.ambIdx!==undefined) curAmb=sv.ambIdx;
+loadCtrlCfg();
  
 // If device was previously chosen — skip device screen
 if(sv.device){
   isMob=(sv.device==='mobile');
   document.getElementById('deviceScreen').style.display='none';
+  const csb=document.getElementById('ctrlSettingsBtn');
+  if(csb) csb.style.display=isMob?'block':'none';
   buildHowto();
   showPanel('pTitle');
 } else {
@@ -926,3 +1093,4 @@ loop();
 </script>
 </body>
 </html>
+ 
