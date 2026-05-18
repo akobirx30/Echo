@@ -59,7 +59,7 @@ canvas{display:block;}
 .btn.sm:hover{color:rgba(255,255,255,0.6);}
 hr.ln{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:12px 0;}
 .inf{font-size:clamp(9px,2.4vw,11px);color:rgba(255,255,255,0.26);text-align:center;margin-bottom:14px;letter-spacing:0.07em;}
-.lgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:14px;}
+.lgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-bottom:14px;}
 .lb{aspect-ratio:1;border:1px solid rgba(255,255,255,0.1);background:transparent;color:rgba(255,255,255,0.18);font-family:monospace;font-size:clamp(9px,2.2vw,11px);cursor:not-allowed;}
 .lb.un{color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.3);cursor:pointer;}
 .lb.un:active{background:rgba(255,255,255,0.08);}
@@ -136,7 +136,7 @@ hr.ln{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:12px 0;}
   font-size:9px;letter-spacing:0.1em;color:rgba(255,255,255,0.18);
   pointer-events:none;z-index:21;display:none;
 }
-@media(max-width:420px){.lgrid{grid-template-columns:repeat(5,1fr);}}
+@media(max-width:420px){.lgrid{grid-template-columns:repeat(5,1fr);}} @media(max-width:340px){.lgrid{grid-template-columns:repeat(4,1fr);}}
 </style>
 </head>
 <body>
@@ -197,7 +197,18 @@ hr.ln{border:none;border-top:1px solid rgba(255,255,255,0.07);margin:12px 0;}
  
   <div id="pLevels" class="panel" style="display:none">
     <div class="ph" style="font-size:clamp(18px,5vw,24px)">LEVELS</div>
-    <div class="ps" style="margin-bottom:12px">UNLOCKED LEVELS ARE AVAILABLE</div>
+    <div class="ps" style="margin-bottom:8px">UNLOCKED LEVELS ARE AVAILABLE</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;font-size:9px;letter-spacing:0.08em;">
+      <span style="color:rgba(255,255,255,0.45)">01-20 EASY</span>
+      <span style="color:rgba(255,255,255,0.25)">|</span>
+      <span style="color:rgba(255,255,255,0.45)">21-40 NORMAL</span>
+      <span style="color:rgba(255,255,255,0.25)">|</span>
+      <span style="color:rgba(255,255,255,0.45)">41-60 HARD</span>
+      <span style="color:rgba(255,255,255,0.25)">|</span>
+      <span style="color:rgba(255,255,255,0.45)">61-80 BRUTAL</span>
+      <span style="color:rgba(255,255,255,0.25)">|</span>
+      <span style="color:rgba(255,255,255,0.45)">81-100 NIGHTMARE</span>
+    </div>
     <div class="lgrid" id="lgrid"></div>
     <button class="btn" onclick="gp('pTitle')">BACK</button>
   </div>
@@ -263,7 +274,7 @@ function saveSv(){ try{ localStorage.setItem(SK,JSON.stringify(sv)); }catch(e){}
 function markDone(lv,pts){
   if(!sv.done.includes(lv)) sv.done.push(lv);
   if(!sv.best[lv]||pts>sv.best[lv]) sv.best[lv]=pts;
-  if(lv>=sv.max && lv<30) sv.max=lv+1;
+  if(lv>=sv.max && lv<100) sv.max=lv+1;
   saveSv();
 }
  
@@ -280,14 +291,15 @@ function chooseDevice(type){
 }
  
 function showDeviceSelect(){
-  gs = 'menu';
+  gs='menu';
   stopAmb();
   hideMob();
   document.getElementById('xbtn').style.display='none';
-  // hide all panels
   allPanels.forEach(p=>document.getElementById(p).style.display='none');
   document.getElementById('overlay').classList.remove('on');
+  document.getElementById('overlay').style.pointerEvents='none';
   document.getElementById('deviceScreen').style.display='flex';
+  resizeC();
 }
  
 function buildHowto(){
@@ -514,13 +526,43 @@ function buildSndList(){
 }
  
 // ═══════════════ MAZE ═══════════════
-const TOTAL=30;
+const TOTAL=100;
 let MC,MR,CELL,MX,MY,mg=[],walls=[];
  
 function lcfg(lv){
-  let c,r;
-  if(lv<=10){c=15;r=11;}else if(lv<=20){c=19;r=15;}else{c=23;r=17;}
-  return{c,r,ammo:lv<=15?7:6,rel:lv<=10?180:lv<=20?200:220,seed:lv*31337+lv*lv*7};
+  // 5 tiers of difficulty
+  // Tier 1 (1-20):   small maze, 7 bullets, normal reload   — learning
+  // Tier 2 (21-40):  medium maze, 6 bullets, slower reload  — getting real
+  // Tier 3 (41-60):  large maze, 5 bullets, slow reload     — hard
+  // Tier 4 (61-80):  huge maze, 4 bullets, very slow reload — brutal
+  // Tier 5 (81-100): massive maze, 3 bullets, punishing     — nightmare
+  let c,r,ammo,rel;
+  if(lv<=20){
+    // 15x11 → grows to 17x13 across tier
+    const t=(lv-1)/19;
+    c=15+Math.floor(t*2); r=11+Math.floor(t*2);
+    ammo=7; rel=170;
+  } else if(lv<=40){
+    const t=(lv-21)/19;
+    c=19+Math.floor(t*2); r=15+Math.floor(t*2);
+    ammo=6; rel=200+Math.floor(t*20);
+  } else if(lv<=60){
+    const t=(lv-41)/19;
+    c=23+Math.floor(t*4); r=17+Math.floor(t*3);
+    ammo=5; rel=230+Math.floor(t*30);
+  } else if(lv<=80){
+    const t=(lv-61)/19;
+    c=29+Math.floor(t*4); r=21+Math.floor(t*3);
+    ammo=4; rel=270+Math.floor(t*40);
+  } else {
+    const t=(lv-81)/19;
+    c=35+Math.floor(t*4); r=25+Math.floor(t*3);
+    ammo=3; rel=320+Math.floor(t*50);
+  }
+  // keep odd for maze symmetry
+  if(c%2===0) c++;
+  if(r%2===0) r++;
+  return{c,r,ammo,rel,seed:lv*31337+lv*lv*7+lv*lv*lv*3};
 }
 function rng(seed){ let s=seed>>>0; return()=>{s=(s^s<<13)>>>0;s=(s^s>>17)>>>0;s=(s^s<<5)>>>0;return s/4294967296;}; }
 function sdim(c,r){
@@ -664,8 +706,11 @@ function blit(){
 }
 function hud(){
   ctx.fillStyle='rgba(0,0,0,0.78)'; ctx.fillRect(0,0,W,50);
+  const tier=curLv<=20?'EASY':curLv<=40?'NORMAL':curLv<=60?'HARD':curLv<=80?'BRUTAL':'NIGHTMARE';
+  const tcol=curLv<=20?'rgba(255,255,255,0.35)':curLv<=40?'rgba(200,200,200,0.5)':curLv<=60?'rgba(220,170,60,0.7)':curLv<=80?'rgba(220,80,80,0.7)':'rgba(180,80,220,0.8)';
   ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font='10px monospace'; ctx.fillText('SCORE',14,14);
   ctx.fillStyle='#fff'; ctx.font='bold 17px monospace'; ctx.fillText(String(sv.best[curLv]||0).padStart(6,'0'),14,36);
+  ctx.fillStyle=tcol; ctx.font='10px monospace'; ctx.fillText(tier,W-14-ctx.measureText(tier).width,14);
   ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.font='10px monospace'; ctx.fillText('LEVEL',105,14);
   ctx.fillStyle='#fff'; ctx.font='bold 17px monospace'; ctx.fillText(String(curLv).padStart(2,'0'),105,36);
   const bx=W/2-MAXAMMO*17/2;
@@ -729,10 +774,18 @@ function hidePanel(){
 function updInf(){ document.getElementById('infTxt').textContent=sv.done.length?`PROGRESS: LEVEL ${sv.max}/30  ·  ${sv.done.length} COMPLETED`:'NO SAVE DATA'; }
 function buildGrid(){
   const g=document.getElementById('lgrid'); g.innerHTML='';
+  // tier colors (dim, only visible when unlocked)
+  const tc=['#888','#aaa','#cc9944','#cc4444','#aa44cc'];
   for(let i=1;i<=TOTAL;i++){
+    const tier=i<=20?0:i<=40?1:i<=60?2:i<=80?3:4;
     const b=document.createElement('button'); b.className='lb'; b.textContent=String(i).padStart(2,'0');
-    if(sv.done.includes(i)) b.classList.add('dn');
-    if(i<=sv.max){b.classList.add('un');b.onclick=()=>startLv(i);}
+    if(sv.done.includes(i)){b.classList.add('dn');b.style.borderColor=tc[tier];b.style.color=tc[tier];}
+    if(i<=sv.max){
+      b.classList.add('un');
+      b.style.borderColor=sv.done.includes(i)?tc[tier]:'rgba(255,255,255,0.28)';
+      b.style.color=sv.done.includes(i)?tc[tier]:'rgba(255,255,255,0.6)';
+      b.onclick=()=>startLv(i);
+    }
     g.appendChild(b);
   }
 }
@@ -777,9 +830,29 @@ const jzone=document.getElementById('jzone');
 const jbase=document.getElementById('jbase');
 const jknob=document.getElementById('jknob');
  
-function jStart(e){e.preventDefault();if(jTid!==null)return;const t=e.changedTouches[0];jTid=t.identifier;jA=true;const r=jbase.getBoundingClientRect();jBX=r.left+r.width/2;jBY=r.top+r.height/2;jUp(t.clientX,t.clientY);}
+function jStart(e){
+  e.preventDefault();if(jTid!==null)return;
+  const t=e.changedTouches[0];jTid=t.identifier;jA=true;
+  // anchor joystick center to where finger landed
+  jBX=t.clientX;jBY=t.clientY;
+  // visually move jbase to finger position
+  const zr=document.getElementById('jzone').getBoundingClientRect();
+  const bx=t.clientX-zr.left-59, by=t.clientY-zr.top-59;
+  jbase.style.left=Math.max(0,bx)+'px';
+  jbase.style.bottom='auto';
+  jbase.style.top=Math.max(0,by)+'px';
+  jUp(t.clientX,t.clientY);
+}
 function jMove(e){e.preventDefault();for(const t of e.changedTouches)if(t.identifier===jTid)jUp(t.clientX,t.clientY);}
-function jEnd(e){for(const t of e.changedTouches)if(t.identifier===jTid){jA=false;jDx=0;jDy=0;jTid=null;jknob.style.transform='translate(-50%,-50%)';break;}}
+function jEnd(e){
+  for(const t of e.changedTouches)if(t.identifier===jTid){
+    jA=false;jDx=0;jDy=0;jTid=null;
+    jknob.style.transform='translate(-50%,-50%)';
+    // reset jbase to default position
+    jbase.style.left='26px';jbase.style.top='auto';jbase.style.bottom='26px';
+    break;
+  }
+}
 function jUp(cx,cy){let dx=cx-jBX,dy=cy-jBY;const d=Math.sqrt(dx*dx+dy*dy);if(d>JM){dx=dx/d*JM;dy=dy/d*JM;}jDx=dx/JM;jDy=dy/JM;jknob.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;}
 jzone.addEventListener('touchstart',jStart,{passive:false});
 jzone.addEventListener('touchmove',jMove,{passive:false});
@@ -790,24 +863,45 @@ jzone.addEventListener('touchcancel',jEnd,{passive:false});
 let aTid=null;
 const azone=document.getElementById('azone');
 function cc(cx,cy){const r=C.getBoundingClientRect();return{x:(cx-r.left)*(W/r.width),y:(cy-r.top)*(H/r.height)};}
-azone.addEventListener('touchstart',e=>{e.preventDefault();if(aTid!==null)return;const t=e.changedTouches[0];aTid=t.identifier;const p=cc(t.clientX,t.clientY);mX=p.x;mY=p.y;},{passive:false});
+azone.addEventListener('touchstart',e=>{
+  e.preventDefault();if(aTid!==null)return;
+  const t=e.changedTouches[0];aTid=t.identifier;
+  const p=cc(t.clientX,t.clientY);mX=p.x;mY=p.y;
+  // tap on aim zone also fires
+  if(gs==='play') fire();
+},{passive:false});
 azone.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===aTid){const p=cc(t.clientX,t.clientY);mX=p.x;mY=p.y;break;}},{passive:false});
 azone.addEventListener('touchend',e=>{for(const t of e.changedTouches)if(t.identifier===aTid){aTid=null;break;}},{passive:false});
  
 // ═══════════════ FIRE / RELOAD BTNS ═══════════════
 const sbtn=document.getElementById('sbtn');
 const rbtn=document.getElementById('rbtn');
-sbtn.addEventListener('touchstart',e=>{e.preventDefault();sbtn.classList.add('pr');if(gs==='play')fire();},{passive:false});
-sbtn.addEventListener('touchend',e=>{e.preventDefault();sbtn.classList.remove('pr');},{passive:false});
+let fireInterval=null;
+sbtn.addEventListener('touchstart',e=>{
+  e.preventDefault();sbtn.classList.add('pr');
+  if(gs==='play'){fire();fireInterval=setInterval(()=>{if(gs==='play')fire();},200);}
+},{passive:false});
+sbtn.addEventListener('touchend',e=>{
+  e.preventDefault();sbtn.classList.remove('pr');
+  clearInterval(fireInterval);fireInterval=null;
+},{passive:false});
+sbtn.addEventListener('touchcancel',e=>{
+  sbtn.classList.remove('pr');clearInterval(fireInterval);fireInterval=null;
+},{passive:false});
 rbtn.addEventListener('touchstart',e=>{e.preventDefault();rbtn.classList.add('pr');if(gs==='play'&&!pl.rel&&pl.ammo<MAXAMMO)reload();},{passive:false});
 rbtn.addEventListener('touchend',e=>{e.preventDefault();rbtn.classList.remove('pr');},{passive:false});
  
 // ═══════════════ RESIZE ═══════════════
 function resizeC(){
-  const bH=isMob&&gs==='play'?190:0;
-  const sc=Math.min(window.innerWidth/W,(window.innerHeight-bH)/H);
-  C.style.width=Math.floor(W*sc)+'px';
-  C.style.height=Math.floor(H*sc)+'px';
+  const bH=isMob&&gs==='play'?196:0;
+  const availW=window.innerWidth;
+  const availH=window.innerHeight-bH;
+  const sc=Math.min(availW/W, availH/H);
+  const cw=Math.floor(W*sc), ch=Math.floor(H*sc);
+  C.style.width=cw+'px';
+  C.style.height=ch+'px';
+  // center canvas
+  C.style.marginTop=isMob&&gs==='play'?'0':Math.max(0,Math.floor((availH-ch)/2))+'px';
 }
 window.addEventListener('resize',resizeC);
 resizeC();
